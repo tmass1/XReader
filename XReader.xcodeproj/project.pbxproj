@@ -15,6 +15,7 @@
 		AA000006 /* BookmarkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000014 /* BookmarkStore.swift */; };
 		AA000007 /* BookmarkViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000015 /* BookmarkViews.swift */; };
 		AA000008 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = AA000021 /* AppIcon.icon */; };
+		AA000009 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AA700002 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,17 @@
 		AA000040 /* XReader.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XReader.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA000050 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA300003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000009 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		AA100000 = {
@@ -73,6 +85,7 @@
 			buildConfigurationList = AA400000 /* Build configuration list for PBXNativeTarget "XReader" */;
 			buildPhases = (
 				AA300001 /* Sources */,
+				AA300003 /* Frameworks */,
 				AA300002 /* Resources */,
 			);
 			buildRules = (
@@ -80,6 +93,9 @@
 			dependencies = (
 			);
 			name = XReader;
+			packageProductDependencies = (
+				AA700002 /* Sparkle */,
+			);
 			productName = XReader;
 			productReference = AA000040 /* XReader.app */;
 			productType = "com.apple.product-type.application";
@@ -108,6 +124,9 @@
 				Base,
 			);
 			mainGroup = AA100000;
+			packageReferences = (
+				AA700001 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = AA100002 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -326,6 +345,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AA700001 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA700002 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA700001 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA500000 /* Project object */;
 }

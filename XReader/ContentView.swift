@@ -310,6 +310,7 @@ private struct LoadingBar: View {
 
 struct SettingsSheet: View {
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var updater = Updater.shared
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -363,10 +364,33 @@ struct SettingsSheet: View {
                 }
             }
 
+            SettingsRow(label: "Updates", help: "Version \(updater.version) · checks daily") {
+                Button {
+                    dismiss()
+                    updater.checkForUpdates()
+                } label: {
+                    Text("Check Now")
+                        .font(TidyTheme.labelSmall(.medium))
+                        .foregroundColor(TidyTheme.text)
+                        .padding(.horizontal, 12)
+                        .frame(height: TidyTheme.controlSmall)
+                        .background(
+                            RoundedRectangle(cornerRadius: TidyTheme.radiusControl, style: .continuous)
+                                .fill(TidyTheme.surfaceSubtle)
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: TidyTheme.radiusControl, style: .continuous)
+                                .stroke(TidyTheme.borderDefault, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+                .disabled(!updater.canCheckForUpdates)
+            }
+
             Spacer(minLength: 0)
         }
         .padding(24)
-        .frame(width: 440, height: 300)
+        .frame(width: 440, height: 350)
         .background(TidyTheme.surface)
     }
 }

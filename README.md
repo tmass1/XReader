@@ -25,6 +25,22 @@ A lightweight native Mac app for reading your X (formerly Twitter) feed without 
 3. Build and Run (Cmd+R)
 4. Log in to X - the app loads x.com/home. Sign in with your account. Session persists between launches.
 
+## Updates
+
+XReader updates itself with [Sparkle](https://sparkle-project.org). It checks daily, and you can check any time from **XReader → Check for Updates…** or **Settings → Updates**. Updates come from this repo's [GitHub Releases](https://github.com/tmass1/XReader/releases) and are only installed if they carry a valid signature from the release key.
+
+### Releasing a new version
+
+```bash
+scripts/release.sh 1.2 "What changed in this version"
+```
+
+The script bumps the version, builds with the Developer ID certificate, notarizes and staples the app, signs the update with Sparkle, then tags the release and publishes it with its `appcast.xml`. Leave out the notes to use the commit messages since the last release.
+
+One-time setup on the releasing Mac:
+- **Signing key:** generated with Sparkle's `generate_keys`, stored in the login Keychain. Back it up (`generate_keys -x <file>`); without it, existing installs can't verify new updates.
+- **Notarization:** `xcrun notarytool store-credentials XReader --apple-id <apple-id> --team-id Y5V8Y3BH9A`
+
 ## Project Structure
 
 - `XReaderApp.swift` - App entry point, menu bar commands, app delegate

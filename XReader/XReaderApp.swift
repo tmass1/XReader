@@ -1,4 +1,37 @@
 import SwiftUI
+import Sparkle
+
+@MainActor
+final class Updater: ObservableObject {
+    static let shared = Updater()
+
+    private let controller = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
+    @Published private(set) var canCheckForUpdates = false
+
+    private init() {
+        controller.updater.publisher(for: \.canCheckForUpdates).assign(to: &$canCheckForUpdates)
+    }
+
+    func checkForUpdates() {
+        controller.checkForUpdates(nil)
+    }
+
+    var version: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(short) (\(build))"
+    }
+}
+
+private struct CheckForUpdatesButton: View {
+    @ObservedObject var updater: Updater
+
+    var body: some View {
+        Button("Check for Updates…", action: updater.checkForUpdates)
+            .disabled(!updater.canCheckForUpdates)
+    }
+}
 
 @main
 struct XReaderApp: App {
@@ -16,6 +49,10 @@ struct XReaderApp: App {
         .defaultSize(width: 920, height: 900)
         .commands {
             CommandGroup(replacing: .newItem) {}
+
+            CommandGroup(after: .appInfo) {
+                CheckForUpdatesButton(updater: .shared)
+            }
 
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") { appState.showSettings = true }
