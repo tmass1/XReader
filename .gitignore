@@ -13,6 +13,9 @@ build/
 *.perspectivev3
 !default.perspectivev3
 
+# Local Claude Code settings and worktrees
+.claude/
+
 # macOS
 .DS_Store
 .AppleDouble
