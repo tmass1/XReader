@@ -83,10 +83,6 @@ struct XWebView: NSViewRepresentable {
             ]
         }
 
-        if state.forceDarkMode {
-            rules.append("body { background-color: #000 !important; color-scheme: dark !important; }")
-        }
-
         return rules.joined(separator: "\n")
     }
 
@@ -196,7 +192,10 @@ struct XWebView: NSViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            guard let url = navigationAction.request.url else {
+            // Embedded frames (player cards, sign-in widgets) load in place. Only the page itself
+            // and new-window links (targetFrame == nil) are kept on X.
+            guard navigationAction.targetFrame?.isMainFrame != false,
+                  let url = navigationAction.request.url else {
                 decisionHandler(.allow)
                 return
             }

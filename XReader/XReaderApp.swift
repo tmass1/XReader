@@ -75,8 +75,10 @@ struct XReaderApp: App {
                     .keyboardShortcut("r", modifiers: .command)
                 Button("Back") { appState.shouldGoBack = true }
                     .keyboardShortcut("[", modifiers: .command)
+                    .disabled(!appState.canGoBack)
                 Button("Forward") { appState.shouldGoForward = true }
                     .keyboardShortcut("]", modifiers: .command)
+                    .disabled(!appState.canGoForward)
 
                 Divider()
 

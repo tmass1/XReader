@@ -47,16 +47,12 @@ class AppState: ObservableObject {
     @Published var minimalMode: Bool {
         didSet { UserDefaults.standard.set(minimalMode, forKey: "minimalMode") }
     }
-    @Published var forceDarkMode: Bool {
-        didSet { UserDefaults.standard.set(forceDarkMode, forKey: "forceDarkMode") }
-    }
 
     init() {
         let d = UserDefaults.standard
         self.themePreference = ThemePreference(rawValue: d.string(forKey: "themePreference") ?? "") ?? .system
         self.zoomLevel = d.object(forKey: "zoomLevel") as? Double ?? 1.0
         self.minimalMode = d.object(forKey: "minimalMode") as? Bool ?? true
-        self.forceDarkMode = d.object(forKey: "forceDarkMode") as? Bool ?? false
     }
 
     func navigate(to urlString: String) {
