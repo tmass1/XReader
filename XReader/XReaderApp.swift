@@ -43,7 +43,6 @@ struct XReaderApp: App {
             ContentView()
                 .environmentObject(appState)
                 .frame(minWidth: 720, minHeight: 560)
-                .preferredColorScheme(appState.themePreference.colorScheme)
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 920, height: 900)

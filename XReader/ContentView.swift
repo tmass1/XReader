@@ -142,6 +142,11 @@ struct ContentView: View {
             }
         }
         .ignoresSafeArea()
+        .onReceive(appState.$pageTitle) { title in
+            // X blanks its title mid-navigation; skip those so the badge doesn't flicker.
+            guard !title.isEmpty else { return }
+            NSApp.dockTile.badgeLabel = AppState.unreadBadge(in: title)
+        }
         .animation(.easeInOut(duration: 0.2), value: appState.showBookmarksPanel)
         .animation(.easeOut(duration: 0.2), value: appState.isLoading)
         .sheet(isPresented: $appState.showAddBookmark) {
@@ -187,9 +192,6 @@ private let destinations: [Destination] = [
 private struct Rail: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject var bookmarkStore: BookmarkStore
-    // Last section entered. Stays selected while drilling into tweets or profiles,
-    // and is what keeps Profile lit (its URL is the user's handle, which we don't know).
-    @State private var section = "Home"
 
     private var isSaved: Bool { bookmarkStore.isBookmarked(url: appState.currentURL.absoluteString) }
 
@@ -198,13 +200,15 @@ private struct Rail: View {
             Color.clear.frame(height: 38) // traffic lights
 
             ForEach(destinations) { d in
-                let active = section == d.id
+                let active = appState.section == d.id
+                let unread = d.id == "Notifications" ? appState.unreadBadge : nil
                 RailButton(
                     icon: active ? d.activeIcon : d.icon,
-                    help: [d.id, d.shortcut].compactMap { $0 }.joined(separator: "  "),
-                    isActive: active
+                    help: [d.id, d.shortcut, unread.map { "\($0) unread" }].compactMap { $0 }.joined(separator: "  "),
+                    isActive: active,
+                    showsDot: unread != nil
                 ) {
-                    section = d.id
+                    appState.section = d.id
                     appState.navigate(to: d.url)
                 }
             }
@@ -230,7 +234,7 @@ private struct Rail: View {
         .onReceive(appState.$currentURL) { url in
             let path = url.path.lowercased()
             if let match = destinations.first(where: { $0.matches(path) }) {
-                section = match.id
+                appState.section = match.id
             }
         }
     }
@@ -240,6 +244,7 @@ private struct RailButton: View {
     let icon: String
     let help: String
     var isActive = false
+    var showsDot = false
     let action: () -> Void
     @State private var isHovered = false
 
@@ -248,6 +253,15 @@ private struct RailButton: View {
             Image(systemName: icon)
                 .font(.system(size: TidyTheme.iconDefault, weight: isActive ? .semibold : .regular))
                 .frame(width: TidyTheme.controlMedium, height: TidyTheme.controlMedium)
+                .overlay(alignment: .topTrailing) {
+                    if showsDot {
+                        Circle()
+                            .fill(TidyTheme.accentForeground)
+                            .frame(width: 8, height: 8)
+                            .overlay(Circle().stroke(TidyTheme.surface, lineWidth: 1.5))
+                            .padding(5)
+                    }
+                }
                 .contentShape(Rectangle())
         }
         .buttonStyle(RailButtonStyle(isActive: isActive, isHovered: isHovered))
