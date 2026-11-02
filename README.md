@@ -5,13 +5,16 @@ A lightweight native Mac app for reading your X (formerly Twitter) feed without 
 ## What It Does
 
 - **Dedicated Mac app** - Lives in your Dock, gets its own window, no browser tabs
-- **Read-only focused** - Hides the compose button and promotional upsells in Minimal Mode
-- **Bookmarking works** - Uses X native web bookmarking, so bookmarks sync to your account
-- **Persistent login** - Cookies stored via WKWebsiteDataStore.default(), stay logged in between launches
-- **Keyboard shortcuts** - Navigate with Cmd+1 (Home), Cmd+2 (Bookmarks), Cmd+3 (Notifications), Cmd+R (Refresh)
-- **Zoom controls** - Cmd+/- to adjust text size
-- **Dark mode** - Forces dark appearance to match X dark theme
-- **External link safety** - Links to non-X domains open in your default browser
+- **One calm column** - An icon rail replaces X's nav, and the timeline sits centered in a single panel
+- **Reading-focused** - Minimal Mode hides compose, upsells and the trends column
+- **Instant navigation** - The rail drives X's own router, so sections switch without reloading
+- **Unread badge** - X's unread count shows on the Dock icon and the rail's bell
+- **Light, Dark or System** - X's own theme follows along live
+- **Picks up where you left off** - Reopens your last page
+- **Bookmarks** - Uses X's bookmarks, so they sync to your account
+- **Keyboard shortcuts** - ⌘1 Home, ⌘2 Bookmarks, ⌘3 Notifications, ⌘4 Messages, ⌘R Refresh, ⌘[ / ⌘] Back / Forward
+- **Zoom controls** - ⌘+ / ⌘- / ⌘0, or Settings → Text size
+- **External link safety** - Links that leave X open in your default browser
 
 ## Requirements
 
@@ -43,28 +46,32 @@ One-time setup on the releasing Mac:
 
 ## Project Structure
 
-- `XReaderApp.swift` - App entry point, menu bar commands, app delegate
-- `AppState.swift` - Observable state (URL, zoom, settings flags)
-- `ContentView.swift` - Main layout: sidebar + toolbar + web view
-- `XWebView.swift` - WKWebView wrapper with CSS injection and navigation
-- `XReader.entitlements` - Sandbox + network entitlements
+- `XReaderApp.swift` - App entry point, menu commands, Sparkle updater
+- `AppState.swift` - Observable state: current page, rail section, settings, unread count
+- `ContentView.swift` - Tidy design tokens, icon rail, web panel, Settings sheet
+- `XWebView.swift` - WKWebView wrapper: stylesheet, router navigation, link policy
+- `AppIcon.icon` - Icon Composer app icon (two vector layers)
+- `scripts/release.sh` - Builds, notarizes, signs and publishes a release
 
 ## Key Features
 
 ### Minimal Mode (on by default)
-Injects CSS to hide: compose/post button, Subscribe to Premium sidebar, Get Verified prompts, and X left nav (replaced by our own sidebar). Toggle off in sidebar or via Cmd+Shift+M.
+Hides the compose button, Premium and verification prompts, X's left nav (replaced by the rail) and the trends column, and centers the timeline. Toggle it in Settings or with ⌘⇧M.
 
-### CSS Injection Strategy
-X is a single-page React app, so CSS is re-injected on every page navigation, at 0.5s and 2.0s delays after load, and whenever settings change.
+### Styling
+The stylesheet is installed at document start, so X's own chrome never flashes on load, and is updated in place when settings change.
 
-### Domain Allowlist
-Only allows X-related domains plus OAuth providers (Google, Apple). Other links open in Safari.
+### Navigation
+Once X has loaded, the rail and menu navigate through X's own router (its hidden nav links, or `pushState`), so switching sections is instant. A full page load is only the fallback.
+
+### Link Policy
+Pages stay on X-related domains and the Google and Apple sign-in providers. A link that leaves X opens in your default browser; embedded players and widgets load in place.
 
 ## Customization
 
-- Edit `injectCSS()` in XWebView.swift to hide/style more elements
+- Edit `XWebView.css(for:)` to hide or restyle more of X
 - Use Safari Web Inspector on x.com to find selectors
-- Drop icon PNGs into Assets.xcassets/AppIcon.appiconset/ for a custom app icon
+- Edit `XReader/AppIcon.icon` in Icon Composer to change the app icon
 
 ## Troubleshooting
 
