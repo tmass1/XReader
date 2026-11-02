@@ -1,14 +1,42 @@
 {
   "fill" : {
-    "solid" : "srgb:0.00000,0.00000,0.00000,1.00000"
+    "linear-gradient" : [
+      "srgb:0.14902,0.14902,0.16471,1.00000",
+      "srgb:0.00000,0.00000,0.00000,1.00000"
+    ]
   },
   "groups" : [
     {
       "layers" : [
         {
           "glass" : true,
-          "image-name" : "x-glyph.svg",
-          "name" : "x-glyph",
+          "image-name" : "stroke-front.svg",
+          "name" : "stroke-front",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "specular" : true,
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0.5
+      }
+    },
+    {
+      "layers" : [
+        {
+          "glass" : true,
+          "image-name" : "stroke-back.svg",
+          "name" : "stroke-back",
           "position" : {
             "scale" : 1,
             "translation-in-points" : [
