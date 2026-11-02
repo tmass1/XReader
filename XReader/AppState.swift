@@ -46,8 +46,6 @@ class AppState: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var pageTitle: String = "X Reader"
 
-    @Published var showBookmarksPanel: Bool = false
-    @Published var showAddBookmark: Bool = false
     @Published var showSettings: Bool = false
 
     // Persisted settings

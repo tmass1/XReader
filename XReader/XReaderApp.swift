@@ -61,7 +61,7 @@ struct XReaderApp: App {
             CommandMenu("Navigation") {
                 Button("Home Feed") { appState.navigate(to: "https://x.com/home") }
                     .keyboardShortcut("1", modifiers: .command)
-                Button("X Bookmarks") { appState.navigate(to: "https://x.com/i/bookmarks") }
+                Button("Bookmarks") { appState.navigate(to: "https://x.com/i/bookmarks") }
                     .keyboardShortcut("2", modifiers: .command)
                 Button("Notifications") { appState.navigate(to: "https://x.com/notifications") }
                     .keyboardShortcut("3", modifiers: .command)
@@ -78,13 +78,6 @@ struct XReaderApp: App {
                 Button("Forward") { appState.shouldGoForward = true }
                     .keyboardShortcut("]", modifiers: .command)
                     .disabled(!appState.canGoForward)
-
-                Divider()
-
-                Button("Save Bookmark") { appState.showAddBookmark = true }
-                    .keyboardShortcut("d", modifiers: .command)
-                Button("My Bookmarks") { appState.showBookmarksPanel.toggle() }
-                    .keyboardShortcut("b", modifiers: [.command, .shift])
             }
 
             CommandMenu("View") {

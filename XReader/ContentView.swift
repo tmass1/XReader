@@ -109,29 +109,20 @@ extension View {
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var bookmarkStore = BookmarkStore()
 
     var body: some View {
         HStack(spacing: 0) {
-            Rail(bookmarkStore: bookmarkStore)
+            Rail()
 
-            HStack(spacing: Shell.gutter) {
-                ZStack(alignment: .top) {
-                    XWebView(cornerRadius: Shell.panelRadius)
-                    if appState.isLoading {
-                        LoadingBar()
-                            .frame(height: 2)
-                            .transition(.opacity)
-                    }
-                }
-                .insetPanel()
-
-                if appState.showBookmarksPanel {
-                    BookmarksPanel(store: bookmarkStore)
-                        .insetPanel()
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
+            ZStack(alignment: .top) {
+                XWebView(cornerRadius: Shell.panelRadius)
+                if appState.isLoading {
+                    LoadingBar()
+                        .frame(height: 2)
+                        .transition(.opacity)
                 }
             }
+            .insetPanel()
             .padding(.vertical, Shell.gutter)
             .padding(.trailing, Shell.gutter)
         }
@@ -147,15 +138,7 @@ struct ContentView: View {
             guard !title.isEmpty else { return }
             NSApp.dockTile.badgeLabel = AppState.unreadBadge(in: title)
         }
-        .animation(.easeInOut(duration: 0.2), value: appState.showBookmarksPanel)
         .animation(.easeOut(duration: 0.2), value: appState.isLoading)
-        .sheet(isPresented: $appState.showAddBookmark) {
-            AddBookmarkSheet(
-                store: bookmarkStore,
-                url: appState.currentURL.absoluteString,
-                title: appState.pageTitle
-            )
-        }
         .sheet(isPresented: $appState.showSettings) {
             SettingsSheet()
                 .environmentObject(appState)
@@ -191,9 +174,6 @@ private let destinations: [Destination] = [
 
 private struct Rail: View {
     @EnvironmentObject var appState: AppState
-    @ObservedObject var bookmarkStore: BookmarkStore
-
-    private var isSaved: Bool { bookmarkStore.isBookmarked(url: appState.currentURL.absoluteString) }
 
     var body: some View {
         VStack(spacing: 4) {
@@ -215,16 +195,6 @@ private struct Rail: View {
 
             Spacer(minLength: 12)
 
-            RailButton(
-                icon: isSaved ? "tray.and.arrow.down.fill" : "tray.and.arrow.down",
-                help: "Save Bookmark  ⌘D",
-                isActive: isSaved
-            ) {
-                appState.showAddBookmark = true
-            }
-            RailButton(icon: "tray.full", help: "My Bookmarks  ⇧⌘B", isActive: appState.showBookmarksPanel) {
-                appState.showBookmarksPanel.toggle()
-            }
             RailButton(icon: "slider.horizontal.3", help: "Settings  ⌘,") {
                 appState.showSettings = true
             }
