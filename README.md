@@ -34,11 +34,14 @@ XReader updates itself with [Sparkle](https://sparkle-project.org). It checks da
 
 ### Releasing a new version
 
+Publishing a release is a production deploy: every installed copy picks it up. `scripts/release.sh` is the only way to do it, and it checks first that your branch has everything that's already live.
+
 ```bash
-scripts/release.sh 1.2 "What changed in this version"
+scripts/release.sh --check 1.3                       # check everything, change nothing
+scripts/release.sh 1.3 "What changed in this version"
 ```
 
-The script bumps the version, builds with the Developer ID certificate, notarizes and staples the app, signs the update with Sparkle, then tags the release and publishes it with its `appcast.xml`. Leave out the notes to use the commit messages since the last release.
+After the checks, the script bumps the version, builds with the Developer ID certificate, notarizes and staples the app, signs the update with Sparkle, then tags the release and publishes it with its `appcast.xml`. Leave out the notes to use the commit messages since the live release. What each stop means, and how to roll back: [docs/DEPLOYING.md](docs/DEPLOYING.md).
 
 One-time setup on the releasing Mac:
 - **Signing key:** generated with Sparkle's `generate_keys`, stored in the login Keychain. Back it up (`generate_keys -x <file>`); without it, existing installs can't verify new updates.
@@ -51,7 +54,10 @@ One-time setup on the releasing Mac:
 - `ContentView.swift` - Tidy design tokens, icon rail, web panel, Settings sheet
 - `XWebView.swift` - WKWebView wrapper: stylesheet, router navigation, link policy
 - `AppIcon.icon` - Icon Composer app icon (two vector layers)
-- `scripts/release.sh` - Builds, notarizes, signs and publishes a release
+- `scripts/release.sh` - The production deploy command: checks, then builds, notarizes, signs and publishes a release
+- `scripts/lib/guard.sh` - The deploy checks; `scripts/tests/` tests them
+- `AGENTS.md` - Rules for coding agents, including deploys
+- `.claude/` - Hook that stops Claude from publishing without the deploy check
 
 ## Key Features
 

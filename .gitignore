@@ -13,8 +13,10 @@ build/
 *.perspectivev3
 !default.perspectivev3
 
-# Local Claude Code settings and worktrees
-.claude/
+# Local Claude Code settings and worktrees (the shared deploy hook is tracked)
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
 
 # macOS
 .DS_Store
