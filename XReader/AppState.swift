@@ -79,10 +79,16 @@ class AppState: ObservableObject {
         }
     }
 
-    // Sign-in flows and the chat PIN screen are one-off steps, not places to reopen.
+    // Sign-in flows, the chat PIN screen and the composer are one-off steps, not places to reopen.
     private static func isRestorable(_ url: URL) -> Bool {
         guard let host = url.host, host == "x.com" || host.hasSuffix(".x.com") else { return false }
-        return !url.path.hasPrefix("/i/flow") && !url.path.hasPrefix("/i/chat/pin")
+        return !url.path.hasPrefix("/i/flow") && !url.path.hasPrefix("/i/chat/pin") && !url.path.hasPrefix("/compose")
+    }
+
+    // The floating compose button would sit on top of these: the composer itself, sign-in
+    // steps, the message box and full-screen media.
+    var showsFloatingCompose: Bool {
+        !["/compose", "/i/flow", "/i/chat", "/messages", "/photo/", "/video/"].contains { currentURL.path.contains($0) }
     }
 
     var unreadBadge: String? { Self.unreadBadge(in: pageTitle) }

@@ -6,7 +6,9 @@ A lightweight native Mac app for reading your X (formerly Twitter) feed without 
 
 - **Dedicated Mac app** - Lives in your Dock, gets its own window, no browser tabs
 - **One calm column** - An icon rail replaces X's nav, and the timeline sits centered in a single panel
-- **Reading-focused** - Minimal Mode hides compose, upsells and the trends column
+- **Compact when small** - Narrow the window below 720 points and the icon rail becomes a bottom bar, with smaller tabs and posts so more fit on screen
+- **Reading-focused** - Minimal Mode hides the compose box, upsells and the trends column
+- **Post when you want to** - A blue + in the rail (a floating button in compact windows) opens X's composer
 - **Instant navigation** - The rail drives X's own router, so sections switch without reloading
 - **Unread badge** - X's unread count shows on the Dock icon and the rail's bell
 - **Light, Dark or System** - X's own theme follows along live
@@ -62,7 +64,7 @@ One-time setup on the releasing Mac:
 ## Key Features
 
 ### Minimal Mode (on by default)
-Hides the compose button, Premium and verification prompts, X's left nav (replaced by the rail) and the trends column, and centers the timeline. Toggle it in Settings or with ⌘⇧M.
+Hides the compose button and the What's happening box, Premium and verification prompts, X's left nav (replaced by the rail) and the trends column, and centers the timeline. Toggle it in Settings or with ⌘⇧M.
 
 ### Styling
 The stylesheet is installed at document start, so X's own chrome never flashes on load, and is updated in place when settings change.

@@ -42,7 +42,7 @@ struct XReaderApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
-                .frame(minWidth: 720, minHeight: 560)
+                .frame(minWidth: 380, minHeight: 440)
         }
         .windowStyle(.hiddenTitleBar)
         .defaultSize(width: 920, height: 900)

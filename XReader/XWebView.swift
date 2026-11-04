@@ -4,6 +4,7 @@ import WebKit
 struct XWebView: NSViewRepresentable {
     @EnvironmentObject var appState: AppState
     var cornerRadius: CGFloat = 0
+    var compact = false
 
     func makeCoordinator() -> Coordinator {
         Coordinator(appState: appState)
@@ -31,7 +32,7 @@ struct XWebView: NSViewRepresentable {
         webView.layer?.masksToBounds = true
 
         context.coordinator.attach(to: webView)
-        context.coordinator.applyStyles(XWebView.css(for: appState))
+        context.coordinator.applyStyles(XWebView.css(for: appState, compact: compact))
 
         webView.pageZoom = appState.zoomLevel
         webView.load(URLRequest(url: appState.currentURL))
@@ -62,10 +63,10 @@ struct XWebView: NSViewRepresentable {
             webView.pageZoom = appState.zoomLevel
         }
 
-        context.coordinator.applyStyles(XWebView.css(for: appState))
+        context.coordinator.applyStyles(XWebView.css(for: appState, compact: compact))
     }
 
-    static func css(for state: AppState) -> String {
+    static func css(for state: AppState, compact: Bool) -> String {
         var rules: [String] = []
 
         if state.minimalMode {
@@ -74,12 +75,34 @@ struct XWebView: NSViewRepresentable {
                 "a[href=\"/compose/post\"], a[data-testid=\"SideNav_NewTweet_Button\"] { display: none !important; }",
                 "aside[aria-label=\"Subscribe to Premium\"], a[href=\"/i/premium_sign_up\"], a[href=\"/i/verified-orgs-signup\"] { display: none !important; }",
                 "div[data-testid=\"getVerified\"], div[data-testid=\"inlinePrompt\"] { display: none !important; }",
+                // The home composer sits between the tabs and the feed. Reply boxes live inside the feed, so they stay.
+                "[data-testid=\"primaryColumn\"] > div > div:has([data-testid=\"tweetTextarea_0\"]):not(:has([data-testid=\"cellInnerDiv\"])), [data-testid=\"primaryColumn\"] > div > div:has([data-testid=\"tweetTextarea_0\"]):not(:has([data-testid=\"cellInnerDiv\"])) + div:empty { display: none !important; }",
                 // X's own nav and trends column; XReader's rail replaces them
                 "header[role=\"banner\"] { display: none !important; }",
                 "[data-testid=\"sidebarColumn\"] { display: none !important; }",
                 // One centered reading column without side rules
                 "main[role=\"main\"] { margin-left: 0 !important; align-items: center !important; }",
                 "[data-testid=\"primaryColumn\"] { margin-left: auto !important; margin-right: auto !important; border-left-color: transparent !important; border-right-color: transparent !important; }",
+            ]
+        }
+
+        if compact {
+            // Smaller content, so a small window shows more of it: X's 15pt text becomes 13.5.
+            // Zoom scales text and avatars,
+            // but media would still fill the column, so it gets its own limit.
+            let smaller = [
+                "[data-testid=\"cellInnerDiv\"] article",
+                // "Show 35 posts"
+                "[data-testid=\"cellInnerDiv\"] > div > div > button",
+                // Tabs and page headers. Messages fills this block entirely, so it's left alone.
+                "[data-testid=\"primaryColumn\"] > div > div:first-child:not(:only-child)",
+                // Profile tabs sit lower on the page
+                "[data-testid=\"primaryColumn\"] > div > div:not(:first-child) nav[role=\"navigation\"]:not(article nav)",
+            ]
+            rules += [
+                smaller.joined(separator: ", ") + " { zoom: 0.9; }",
+                "[data-testid=\"cellInnerDiv\"] article div[aria-labelledby] { max-width: min(75%, 360px) !important; }",
+                "[data-testid=\"cellInnerDiv\"] article div[aria-labelledby] div[aria-labelledby] { max-width: none !important; }",
             ]
         }
 

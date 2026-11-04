@@ -25,6 +25,11 @@ enum TidyTheme {
     static let actionHover   = dynamicColor(light: "3B3746", dark: "FFFFFF")
     static let actionPressed = dynamicColor(light: "17131D", dark: "D5CCE4")
 
+    // Compose: X's own blue, the one color in the shell that comes from X
+    static let composeDefault = dynamicColor(light: "1D9BF0", dark: "1D9BF0")
+    static let composeHover   = dynamicColor(light: "1A8CD8", dark: "1A8CD8")
+    static let composePressed = dynamicColor(light: "177CC0", dark: "177CC0")
+
     // Accent
     static let accentForeground = dynamicColor(light: "6350C5", dark: "BCABFF")
     static let accentBackground = dynamicColor(light: "EEE9FF", dark: "393047")
@@ -89,6 +94,12 @@ private enum Shell {
     static let railWidth: CGFloat = 76
     static let gutter: CGFloat = 8
     static let panelRadius: CGFloat = 12
+    // X's column is 600 wide, so below this the rail would squeeze it. The nav moves to a bottom bar instead.
+    static let compactBelowWidth: CGFloat = 720
+    // Twice the traffic lights' center (16 from the top), so they sit in the middle of the strip.
+    static let titleStripHeight: CGFloat = 32
+    static let bottomBarHeight: CGFloat = 50
+    static let columnWidth: CGFloat = 600
 }
 
 private struct InsetPanel: ViewModifier {
@@ -111,20 +122,42 @@ struct ContentView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
-        HStack(spacing: 0) {
-            Rail()
+        GeometryReader { geo in
+            let compact = geo.size.width < Shell.compactBelowWidth
+            // AnyLayout keeps the web view alive across the switch; if/else would rebuild it and reload X.
+            let layout = compact ? AnyLayout(VStackLayout(spacing: 0)) : AnyLayout(HStackLayout(spacing: 0))
 
-            ZStack(alignment: .top) {
-                XWebView(cornerRadius: Shell.panelRadius)
-                if appState.isLoading {
-                    LoadingBar()
-                        .frame(height: 2)
-                        .transition(.opacity)
+            layout {
+                if compact { Color.clear.frame(height: Shell.titleStripHeight) } else { Rail() }
+
+                ZStack(alignment: .top) {
+                    XWebView(cornerRadius: Shell.panelRadius, compact: compact)
+                    if appState.isLoading {
+                        LoadingBar()
+                            .frame(height: 2)
+                            .transition(.opacity)
+                    }
                 }
+                .overlay(alignment: .bottomTrailing) {
+                    if compact && appState.showsFloatingCompose {
+                        ComposeButton(floating: true)
+                            .padding(16)
+                    }
+                }
+                .insetPanel()
+                .padding(EdgeInsets(
+                    top: compact ? 0 : Shell.gutter,
+                    leading: compact ? Shell.gutter : 0,
+                    bottom: compact ? 0 : Shell.gutter,
+                    trailing: Shell.gutter
+                ))
+
+                if compact { BottomBar() }
             }
-            .insetPanel()
-            .padding(.vertical, Shell.gutter)
-            .padding(.trailing, Shell.gutter)
+            .sheet(isPresented: $appState.showSettings) {
+                SettingsSheet(compact: compact)
+                    .environmentObject(appState)
+            }
         }
         .background {
             ZStack {
@@ -138,11 +171,13 @@ struct ContentView: View {
             guard !title.isEmpty else { return }
             NSApp.dockTile.badgeLabel = AppState.unreadBadge(in: title)
         }
-        .animation(.easeOut(duration: 0.2), value: appState.isLoading)
-        .sheet(isPresented: $appState.showSettings) {
-            SettingsSheet()
-                .environmentObject(appState)
+        .onReceive(appState.$currentURL) { url in
+            let path = url.path.lowercased()
+            if let match = destinations.first(where: { $0.matches(path) }) {
+                appState.section = match.id
+            }
         }
+        .animation(.easeOut(duration: 0.2), value: appState.isLoading)
     }
 }
 
@@ -172,41 +207,64 @@ private let destinations: [Destination] = [
     .init(id: "Profile",       icon: "person",          activeIcon: "person.fill",     paths: [],                        url: "https://x.com/profile",       shortcut: nil),
 ]
 
-private struct Rail: View {
+private struct DestinationButtons: View {
     @EnvironmentObject var appState: AppState
+    var fillsBar = false
 
+    var body: some View {
+        ForEach(destinations) { d in
+            let active = appState.section == d.id
+            let unread = d.id == "Notifications" ? appState.unreadBadge : nil
+            RailButton(
+                icon: active ? d.activeIcon : d.icon,
+                help: [d.id, d.shortcut, unread.map { "\($0) unread" }].compactMap { $0 }.joined(separator: "  "),
+                isActive: active,
+                showsDot: unread != nil,
+                fillsBar: fillsBar
+            ) {
+                appState.section = d.id
+                appState.navigate(to: d.url)
+            }
+        }
+    }
+}
+
+private struct SettingsButton: View {
+    @EnvironmentObject var appState: AppState
+    var fillsBar = false
+
+    var body: some View {
+        RailButton(icon: "slider.horizontal.3", help: "Settings  ⌘,", fillsBar: fillsBar) {
+            appState.showSettings = true
+        }
+    }
+}
+
+private struct Rail: View {
     var body: some View {
         VStack(spacing: 4) {
             Color.clear.frame(height: 38) // traffic lights
-
-            ForEach(destinations) { d in
-                let active = appState.section == d.id
-                let unread = d.id == "Notifications" ? appState.unreadBadge : nil
-                RailButton(
-                    icon: active ? d.activeIcon : d.icon,
-                    help: [d.id, d.shortcut, unread.map { "\($0) unread" }].compactMap { $0 }.joined(separator: "  "),
-                    isActive: active,
-                    showsDot: unread != nil
-                ) {
-                    appState.section = d.id
-                    appState.navigate(to: d.url)
-                }
-            }
-
+            DestinationButtons()
+            ComposeButton()
+                .padding(.top, 6)
             Spacer(minLength: 12)
-
-            RailButton(icon: "slider.horizontal.3", help: "Settings  ⌘,") {
-                appState.showSettings = true
-            }
+            SettingsButton()
         }
         .padding(.bottom, 14)
         .frame(width: Shell.railWidth)
-        .onReceive(appState.$currentURL) { url in
-            let path = url.path.lowercased()
-            if let match = destinations.first(where: { $0.matches(path) }) {
-                appState.section = match.id
-            }
+    }
+}
+
+// The rail in compact windows: the same items in the same order, along the bottom.
+private struct BottomBar: View {
+    var body: some View {
+        HStack(spacing: 0) {
+            DestinationButtons(fillsBar: true)
+            SettingsButton(fillsBar: true)
         }
+        .frame(maxWidth: Shell.columnWidth)
+        .padding(.horizontal, Shell.gutter)
+        .frame(height: Shell.bottomBarHeight)
     }
 }
 
@@ -215,6 +273,8 @@ private struct RailButton: View {
     let help: String
     var isActive = false
     var showsDot = false
+    // Takes its share of the bar, so the whole cell is clickable around the highlight.
+    var fillsBar = false
     let action: () -> Void
     @State private var isHovered = false
 
@@ -232,12 +292,57 @@ private struct RailButton: View {
                             .padding(5)
                     }
                 }
+                .frame(maxWidth: fillsBar ? .infinity : nil, maxHeight: fillsBar ? .infinity : nil)
                 .contentShape(Rectangle())
         }
         .buttonStyle(RailButtonStyle(isActive: isActive, isHovered: isHovered))
         .help(help)
         .onHover { isHovered = $0 }
         .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+}
+
+// Posting is the one action that isn't navigation, so it gets its own shape and color.
+// In compact windows it floats over the feed.
+private struct ComposeButton: View {
+    @EnvironmentObject var appState: AppState
+    var floating = false
+    @State private var isHovered = false
+
+    var body: some View {
+        let diameter: CGFloat = floating ? 48 : TidyTheme.controlMedium
+
+        Button {
+            appState.navigate(to: "https://x.com/compose/post")
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: floating ? 20 : TidyTheme.iconDefault, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: diameter, height: diameter)
+                .contentShape(Circle())
+        }
+        .buttonStyle(ComposeButtonStyle(isHovered: isHovered))
+        .shadow(color: floating ? TidyTheme.shadowControl : .clear, radius: 8, y: 3)
+        .help("New post")
+        .accessibilityLabel("New post")
+        .onHover { isHovered = $0 }
+        .animation(.easeOut(duration: 0.12), value: isHovered)
+    }
+}
+
+private struct ComposeButtonStyle: ButtonStyle {
+    let isHovered: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                Circle().fill(
+                    configuration.isPressed ? TidyTheme.composePressed
+                        : (isHovered ? TidyTheme.composeHover : TidyTheme.composeDefault)
+                )
+            )
+            .scaleEffect(configuration.isPressed ? 0.94 : 1)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -253,6 +358,7 @@ private struct RailButtonStyle: ButtonStyle {
             .background(
                 RoundedRectangle(cornerRadius: TidyTheme.radiusAction, style: .continuous)
                     .fill(lit ? TidyTheme.accentBackground : (isHovered ? TidyTheme.surfaceHover : .clear))
+                    .frame(width: TidyTheme.controlMedium, height: TidyTheme.controlMedium)
             )
             .scaleEffect(configuration.isPressed ? 0.94 : 1)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
@@ -296,6 +402,7 @@ struct SettingsSheet: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var updater = Updater.shared
     @Environment(\.dismiss) var dismiss
+    var compact = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -374,7 +481,8 @@ struct SettingsSheet: View {
             Spacer(minLength: 0)
         }
         .padding(24)
-        .frame(width: 440, height: 350)
+        // Narrow enough to stay inside a compact window; rows wrap, so the height follows them.
+        .frame(width: compact ? 360 : 440, height: compact ? nil : 350)
         .background(TidyTheme.surface)
     }
 }
@@ -415,9 +523,11 @@ private struct SettingsRow<Content: View>: View {
                 Text(help)
                     .font(TidyTheme.caption())
                     .foregroundColor(TidyTheme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Spacer()
             content()
+                .fixedSize()
         }
     }
 }
