@@ -47,7 +47,7 @@ stub_outside_world() {
   run_tests()       { ok "tests (stand-in)"; }
   check_tools()     { ok "tools (stand-in)"; }
   verify_live()     { ok "live health (stand-in)"; }
-  build_release()   { echo "BUILD STARTED"; OUT=/nonexistent ZIP=none; }
+  build_release()   { echo "BUILD STARTED with notes: $NOTES"; OUT=/nonexistent ZIP=none; }
   publish_release() { echo "PUBLISHED"; RELEASE_COMMIT="$(git rev-parse HEAD)"; }
   finish()          { echo "FINISHED"; }
 }
@@ -166,6 +166,20 @@ git reset -q --hard "$R"
 git push -qf origin main
 release --check
 expect "nothing new: asks before shipping the same app" 0 "$STATUS" "$RESULT" "Would ask: This would ship the same app as v1.0"
+
+echo "# Arguments"
+new_fixture arguments
+echo 'x' >>XReader/App.swift && git commit -qam "Some work" && git push -q origin main
+release 1.1 "- First bullet
+- Second bullet" --yes
+expect "release notes can start with a bullet" 0 "$STATUS" "$RESULT" \
+  "BUILD STARTED with notes: - First bullet" "- Second bullet" "PUBLISHED" "!Unknown option"
+release 1.1 "Plain notes" --yes
+expect "release notes can be plain text" 0 "$STATUS" "$RESULT" "BUILD STARTED with notes: Plain notes"
+release 1.1 -yes
+expect "a mistyped flag isn't taken as notes" 1 "$STATUS" "$RESULT" "Unknown option: -yes" "!BUILD STARTED"
+release --bogus
+expect "an unknown option stops" 1 "$STATUS" "$RESULT" "Unknown option: --bogus" "!BUILD STARTED"
 
 echo "# Keeping things private"
 new_fixture private

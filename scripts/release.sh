@@ -29,7 +29,8 @@ main() {
       --yes) YES=1 ;;
       --rollback) shift; ROLLBACK_TO="${1:-}"; if [[ -z $ROLLBACK_TO ]]; then usage; exit 1; fi ;;
       -h | --help) usage; exit 0 ;;
-      -*) echo "Unknown option: $1"; usage; exit 1 ;;
+      # Release notes can start with a "- " bullet, so that's not an option.
+      -[!\ ]*) echo "Unknown option: $1"; usage; exit 1 ;;
       *)
         if [[ -z $VERSION ]]; then VERSION=$1
         elif [[ -z $NOTES ]]; then NOTES=$1
