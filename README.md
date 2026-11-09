@@ -84,5 +84,6 @@ Pages stay on X-related domains and the Google and Apple sign-in providers. A li
 ## Troubleshooting
 
 - **Blank screen**: Verify entitlements include com.apple.security.network.client = true
+- **"Something went wrong, but don't fret"**: X shows this when one of its scripts fails to download, usually a network blip. XReader reloads on its own with growing pauses, and again when the Mac wakes or you come back to the app. If it keeps happening, check for a VPN or network filter blocking abs.twimg.com
 - **CSS not working**: X updates their DOM frequently. Inspect in Safari (Develop > XReader) and update selectors
 - **Login does not persist**: Ensure WKWebsiteDataStore.default() is used (not .nonPersistent())

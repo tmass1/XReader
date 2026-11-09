@@ -114,7 +114,11 @@ struct XWebView: NSViewRepresentable {
         var lastNavigatedURL: URL?
         private weak var webView: WKWebView?
         private var observations: [NSKeyValueObservation] = []
+        private var notificationObservers: [NSObjectProtocol] = []
         private var appliedCSS: String?
+        private var loadRetries = 0
+        private var pendingRetry: DispatchWorkItem?
+        private static let retryDelays: [TimeInterval] = [2, 5, 15, 30, 60]
 
         init(appState: AppState) {
             self.appState = appState
@@ -145,6 +149,57 @@ struct XWebView: NSViewRepresentable {
                     DispatchQueue.main.async { self?.appState.canGoForward = wv.canGoForward }
                 },
             ]
+            // After a break the network is often back, so look again with fresh retries.
+            let retryAfterBreak: (Notification) -> Void = { [weak self] _ in
+                self?.loadRetries = 0
+                self?.checkForLoadFailure()
+            }
+            notificationObservers = [
+                NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main, using: retryAfterBreak),
+                NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main, using: retryAfterBreak),
+            ]
+        }
+
+        // X shows "Something went wrong… Try again" (#ScriptLoadFailure) when one of its
+        // scripts fails to download, usually a network blip after waking or switching Wi-Fi.
+        // A healthy page removes that element once X starts.
+        private static let loadFailureCheck = """
+        const screen = document.getElementById('ScriptLoadFailure');
+        if (!screen || screen.getClientRects().length === 0) return null;
+        const failed = screen.querySelector('input[name="failedScript"]');
+        return (failed && failed.value) || 'a script';
+        """
+
+        func checkForLoadFailure() {
+            guard let webView, !webView.isLoading, pendingRetry == nil else { return }
+            webView.callAsyncJavaScript(Self.loadFailureCheck, arguments: [:], in: nil, in: .page) { [weak self] result in
+                guard let self else { return }
+                guard case .success(let value) = result, let failedScript = value as? String else {
+                    self.loadRetries = 0
+                    return
+                }
+                self.retryLoad(after: failedScript)
+            }
+        }
+
+        // Reloads with growing pauses. Once they run out, waking the Mac or coming back
+        // to XReader tries again.
+        private func retryLoad(after failedScript: String) {
+            guard loadRetries < Self.retryDelays.count else { return }
+            let delay = Self.retryDelays[loadRetries]
+            loadRetries += 1
+            NSLog("XReader: X couldn't load %@, reloading in %.0fs", failedScript, delay)
+            let retry = DispatchWorkItem { [weak self] in
+                self?.pendingRetry = nil
+                self?.webView?.reloadFromOrigin()
+            }
+            pendingRetry = retry
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: retry)
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            // X decides its scripts failed a moment after the page itself finishes.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self] in self?.checkForLoadFailure() }
         }
 
         // Once X is running, route through its own client-side router so switching
